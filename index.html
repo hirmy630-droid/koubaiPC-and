@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>勾配 寸法計算</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -13,159 +13,157 @@
             font-size: 0.9375rem; 
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
             -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
+            touch-action: pan-y; /* 垂直スクロールを許可し、水平方向はJSで制御しやすくする */
+            overflow-x: hidden;
         }
         
-        h2 { font-size: 1.25rem !important; }  
-        
-        .input-label { font-size: 0.9rem !important; font-weight: 700; }
-        
-        .result-value { font-size: 1.35rem !important; font-weight: 800; line-height: 1.2; }
-        .result-unit { font-size: 0.875rem !important; margin-left: 2px; }
-
-        .input-card {
-            background: #1c1c1e; 
+        /* 一体型コンテナ */
+        .unified-input-unit {
+            background: #1c1c1e;
             border-radius: 14px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-        }
-
-        .tab-container {
-            background: linear-gradient(180deg, #161618 0%, #2c2c2e 100%);
-            padding: 3px;
-            border-radius: 12px;
-            display: flex;
-            margin-bottom: 16px;
-            border: 1px solid #38383a;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.05);
-        }
-
-        .tab-button {
-            flex: 1;
-            padding: 10px 0;
-            text-align: center;
-            font-weight: 600;
-            border-radius: 9px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            color: #d1d1d6; 
-            border: 2px solid transparent;
-        }
-
-        .tab-button.active {
-            background: linear-gradient(180deg, #636366 0%, #48484a 100%);
-            color: white;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
-            border-color: #ff9f0a !important;
-            transform: translateY(-1px);
-        }
-
-        .btn-3d-silver {
-            background: linear-gradient(180deg, #e5e5ea 0%, #8e8e93 100%);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
-            border: 1px solid #7a7a7a;
-            color: #48484a; 
-            font-weight: 800;
-            transition: all 0.1s ease;
-            cursor: pointer;
-        }
-
-        .btn-3d-silver:active {
-            transform: translateY(2px);
-            box-shadow: 0 1px 2px rgba(0,0,0,0.4), inset 0 1px 1px rgba(0,0,0,0.2);
-            background: linear-gradient(180deg, #d1d1d6 0%, #7a7a7a 100%);
-        }
-
-        .result-table {
-            table-layout: fixed;
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .result-table th, .result-table td {
-            border: 0.5px solid #545456; 
-            text-align: center; 
-            padding: 10px 2px !important;
-            white-space: nowrap; 
             overflow: hidden;
-            word-break: keep-all;
+            border: 1px solid #333;
         }
 
-        .result-table th {
-            background-color: #2c2c2e;
-            font-size: 1rem !important;
+        /* 入力セルセクション */
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: #000;
+        }
+        .input-cell {
+            border-bottom: 1px solid #333;
+            border-right: 1px solid #333;
+            padding: 4px 10px;
+            height: 58px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            background: #000;
+        }
+        .input-cell:nth-child(2n) {
+            border-right: none;
+        }
+        .input-cell.active {
+            outline: 2px solid #ff9f0a;
+            outline-offset: -2px;
+            z-index: 20;
+            background: #1c1c1e;
+        }
+        .cell-label {
+            font-size: 13px !important;
+            color: #8e8e93;
+            font-weight: 600;
+            margin-bottom: 0px;
+        }
+        .cell-value {
+            font-size: 1.6rem; 
+            font-weight: 700;
+            text-align: right;
+            padding-right: 4px;
+            line-height: 1.1;
+        }
+
+        /* テンキーセクション */
+        .keypad-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            background: #333;
+            gap: 1px;
+        }
+        .key-btn {
+            background: #1c1c1e;
+            height: 68px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            font-weight: 500;
+            transition: background 0.1s;
+        }
+        .key-btn:active { background: #3a3a3c; }
+        .key-btn.gray { background: #2c2c2e; color: #d1d1d6; }
+        
+        .key-btn.orange { 
+            background: #ff9f0a; 
+            color: #fff; 
+            grid-row: span 2; 
+            height: 137px; 
+            font-weight: 800;
+        }
+        .key-btn.orange:active { background: #e68e09; }
+        
+        .key-btn.triple-zero {
+            font-size: 1.3rem;
             font-weight: 700;
         }
-        
-        .result-table td {
-            font-size: 1.25rem !important;
+
+        /* タブ */
+        .tab-container {
+            background: #161618;
+            padding: 2px;
+            border-radius: 10px;
+            display: flex;
+            margin-bottom: 10px;
+            border: 1px solid #38383a;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 6px 0;
+            text-align: center;
+            font-weight: 600;
+            border-radius: 7px;
+            color: #d1d1d6;
+            font-size: 0.85rem;
+        }
+        .tab-button.active {
+            background: #48484a;
+            color: white;
+            border: 1px solid #ff9f0a;
+        }
+
+        .result-label {
+            font-size: 13px !important;
+            font-weight: 700;
+        }
+
+        .result-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            line-height: 1.1;
         }
 
         .canvas-container {
-            border: 1px solid #38383a;
-            border-radius: 12px;
-            overflow: hidden;
-            background-color: #000000;
+            background-color: #000;
             width: 100%;
-            position: relative;
+            aspect-ratio: 16 / 9;
         }
-
-        canvas {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        /* 入力枠のデザイン調整 */
-        .styled-input {
-            font-size: 1.35rem !important;
-            font-weight: 600;
-            padding: 0.6rem; 
-            text-align: center;
-            width: 100%;
-            border-radius: 10px;
-            border: 1px solid #545458; /* 通常時: 細めのグレー */
-            background-color: #2c2c2e;
-            color: #ffffff;
-            outline: none;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* 共通フォーカス設定 */
-        .styled-input:focus {
-            border-width: 2px !important;
-            background-color: #3a3a3c;
-            transform: scale(1.01);
-        }
-
-        /* 個別の選択時のボーダー色をラベルに合わせる */
-        #inputA:focus, #inputC:focus {
-            border-color: #30d158 !important; /* L1, L2: 緑 */
-        }
-        #inputB:focus {
-            border-color: #0a84ff !important; /* 幅 W: 青 */
-        }
-        #inputInterval:focus {
-            border-color: #bf5af2 !important; /* 働き幅 ＠: 紫 */
-        }
-
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        input[type=number] {
-            -moz-appearance: textfield;
-        }
+        canvas { width: 100%; height: 100%; display: block; }
 
         .view-section { display: none; }
         .view-section.active { display: block; }
+        
+        .result-table th {
+            border: 0.5px solid #333; 
+            text-align: center; 
+            padding: 10px 2px !important;
+            font-size: 14px;
+        }
+        
+        .result-table td {
+            border: 0.5px solid #333; 
+            text-align: center; 
+            padding: 12px 2px !important;
+            font-size: 1.1rem;
+        }
     </style>
 </head>
-<body class="p-3 md:p-6">
-    <div id="swipe-container" class="max-w-4xl mx-auto min-h-screen">
-        <!-- ヘッダーレイアウト: タイトル26px左寄せ, KYOWA ROOF右寄せ -->
-        <header class="flex items-baseline justify-between py-4 px-1">
-            <h1 class="text-[26px] font-bold text-white tracking-tight">勾配 寸法計算</h1>
-            <p class="text-[14px] font-medium text-gray-500 uppercase tracking-widest">KYOWA ROOF</p>
+<body class="p-3">
+    <div id="app-container" class="max-w-md mx-auto min-h-screen pb-4">
+        <header class="flex items-baseline justify-between py-1 px-1 mb-1">
+            <h1 class="text-[20px] font-bold text-white tracking-tight">勾配 寸法計算</h1>
+            <p class="text-[12px] font-medium text-gray-500 uppercase tracking-widest">KYOWA ROOF</p>
         </header>
 
         <div class="tab-container">
@@ -173,135 +171,204 @@
             <button id="tab-table" class="tab-button" onclick="switchTab('table')">寸法表</button>
         </div>
 
+        <!-- 計算画面 -->
         <div id="view-calc" class="view-section active">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mb-8">
-                <div class="input-card py-4 px-5 md:col-span-1 text-center flex flex-col justify-between h-full">
-                    <div>
-                        <h2 class="font-bold mb-3 border-b border-gray-800 pb-2 text-gray-200">入力設定</h2>
-                        <div class="space-y-3">
-                            <div>
-                                <label class="block input-label text-[#30d158] mb-0.5">基準側の寸法 (L1)</label>
-                                <div class="relative">
-                                    <input type="text" id="inputA" inputmode="decimal" class="styled-input" placeholder="0">
-                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[#d1d1d6] font-semibold text-sm pointer-events-none">mm</span>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block input-label text-[#30d158] mb-0.5">延長側の寸法 (L2)</label>
-                                <div class="relative">
-                                    <input type="text" id="inputC" inputmode="decimal" class="styled-input" placeholder="0">
-                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[#d1d1d6] font-semibold text-sm pointer-events-none">mm</span>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block input-label text-[#0a84ff] mb-0.5">全体の幅 (W)</label>
-                                <div class="relative">
-                                    <input type="text" id="inputB" inputmode="decimal" class="styled-input" placeholder="0">
-                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[#d1d1d6] font-semibold text-sm pointer-events-none">mm</span>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block input-label text-[#bf5af2] mb-0.5">働き幅 (＠)</label>
-                                <div class="relative">
-                                    <input type="text" id="inputInterval" inputmode="decimal" class="styled-input" placeholder="0">
-                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[#d1d1d6] font-semibold text-sm pointer-events-none">mm</span>
-                                </div>
-                            </div>
-                        </div>
+            <div class="unified-input-unit mb-3">
+                <div class="input-grid">
+                    <div id="cell-L1" class="input-cell active" onclick="setActiveCell('L1')">
+                        <span class="cell-label text-[#30d158]">基準側 L1</span>
+                        <span id="val-L1" class="cell-value text-[#30d158]">0</span>
                     </div>
-                    <button onclick="resetAll()" class="w-full mt-6 py-3 px-4 btn-3d-silver rounded-xl">すべて消去</button>
+                    <div id="cell-L2" class="input-cell" onclick="setActiveCell('L2')">
+                        <span class="cell-label text-[#30d158]">延長側 L2</span>
+                        <span id="val-L2" class="cell-value text-[#30d158]">0</span>
+                    </div>
+                    <div id="cell-W" class="input-cell" onclick="setActiveCell('W')">
+                        <span class="cell-label text-[#0a84ff]">全体の幅 W</span>
+                        <span id="val-W" class="cell-value text-[#0a84ff]">0</span>
+                    </div>
+                    <div id="cell-Pitch" class="input-cell" onclick="setActiveCell('Pitch')">
+                        <span class="cell-label text-[#bf5af2]">働き幅 ＠</span>
+                        <span id="val-Pitch" class="cell-value text-[#bf5af2]">0</span>
+                    </div>
                 </div>
 
-                <div class="input-card p-4 md:col-span-2">
-                    <h2 class="font-bold mb-3 border-b border-gray-800 pb-2 text-gray-200 text-center md:text-left">計算結果</h2>
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-[#0a84ff15] border border-[#0a84ff44] p-2 rounded-xl text-center">
-                            <span class="block text-[0.85rem] text-[#0a84ff] font-bold uppercase mb-1">延長後の幅</span>
-                            <span id="resNewB" class="result-value text-white">-</span> <span class="text-[#d1d1d6] text-xs">mm</span>
-                        </div>
-                        <div class="bg-[#30d15815] border border-[#30d15844] p-2 rounded-xl text-center">
-                            <span class="block text-[0.85rem] text-[#30d158] font-bold uppercase mb-1">延長後のL2</span>
-                            <span id="resNewC" class="result-value text-white">-</span> <span class="text-[#d1d1d6] text-xs">mm</span>
-                        </div>
-                        <div class="bg-[#ff9f0a15] border border-[#ff9f0a44] p-2 rounded-xl text-center">
-                            <span class="block text-[0.85rem] text-[#ff9f0a] font-bold uppercase mb-1">総区間数</span>
-                            <span id="resIntervalCount" class="result-value text-white">-</span> <span class="text-[#d1d1d6] text-xs">枚</span>
-                        </div>
-                        <div class="bg-[#bf5af215] border border-[#bf5af244] p-2 rounded-xl text-center">
-                            <span class="block text-[0.85rem] text-[#bf5af2] font-bold uppercase mb-1">1区間増分</span>
-                            <span id="resStep" class="result-value text-white">-</span> <span class="text-[#d1d1d6] text-xs">mm</span>
-                        </div>
+                <div class="keypad-grid">
+                    <div class="key-btn" onclick="pressKey('7')">7</div>
+                    <div class="key-btn" onclick="pressKey('8')">8</div>
+                    <div class="key-btn" onclick="pressKey('9')">9</div>
+                    <div class="key-btn gray" onclick="pressKey('C')">C</div>
+                    
+                    <div class="key-btn" onclick="pressKey('4')">4</div>
+                    <div class="key-btn" onclick="pressKey('5')">5</div>
+                    <div class="key-btn" onclick="pressKey('6')">6</div>
+                    <div class="key-btn gray" onclick="pressKey('AC')">AC</div>
+                    
+                    <div class="key-btn" onclick="pressKey('1')">1</div>
+                    <div class="key-btn" onclick="pressKey('2')">2</div>
+                    <div class="key-btn" onclick="pressKey('3')">3</div>
+                    <div class="key-btn orange" onclick="pressKey('enter')">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>
                     </div>
                     
-                    <div class="canvas-container shadow-inner">
-                        <canvas id="slopeCanvas" width="1200" height="700"></canvas>
+                    <div class="key-btn" onclick="pressKey('0')">0</div>
+                    <div class="key-btn" onclick="pressKey('00')">00</div>
+                    <div class="key-btn triple-zero" onclick="pressKey('000')">000</div>
+                </div>
+            </div>
+
+            <div class="bg-[#1c1c1e] rounded-[14px] p-3 border border-[#333]">
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <div class="bg-black border border-[#333] p-1.5 rounded-lg text-center">
+                        <span class="block result-label text-[#0a84ff]">延長後の幅</span>
+                        <span id="resNewB" class="result-value text-white">-</span>
                     </div>
+                    <div class="bg-black border border-[#333] p-1.5 rounded-lg text-center">
+                        <span class="block result-label text-[#30d158]">延長後のL2</span>
+                        <span id="resNewC" class="result-value text-white">-</span>
+                    </div>
+                    <div class="bg-black border border-[#333] p-1.5 rounded-lg text-center">
+                        <span class="block result-label text-[#ff9f0a]">総枚数</span>
+                        <span id="resIntervalCount" class="result-value text-white">-</span>
+                    </div>
+                    <div class="bg-black border border-[#333] p-1.5 rounded-lg text-center">
+                        <span class="block result-label text-[#bf5af2]">増分</span>
+                        <span id="resStep" class="result-value text-white">-</span>
+                    </div>
+                </div>
+                <div class="canvas-container border border-[#333] rounded-lg">
+                    <canvas id="slopeCanvas"></canvas>
                 </div>
             </div>
         </div>
 
+        <!-- 寸法表画面 -->
         <div id="view-table" class="view-section">
-            <div class="input-card p-4 md:p-8">
-                <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
-                    <h2 class="font-bold text-gray-200">各縦線の寸法表</h2>
-                    <span id="table-summary" class="text-[1.25rem] text-[#ff9f0a] font-bold"></span>
+            <div class="bg-[#1c1c1e] rounded-[14px] p-3 border border-[#333]">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="font-bold text-gray-200">寸法詳細</h2>
+                    <span id="table-summary" class="text-lg text-[#ff9f0a] font-bold"></span>
                 </div>
-                <div class="overflow-hidden rounded-xl border border-[#38383a]">
-                    <table class="result-table bg-black">
-                        <thead>
-                            <tr>
-                                <th class="w-[20%] text-[#ff9f0a]">数量</th>
-                                <th class="w-[40%] text-[#0a84ff]">働き幅</th>
-                                <th class="w-[40%] text-[#30d158]">長さ</th>
-                            </tr>
-                        </thead>
-                        <tbody id="resultBody" class="text-white"></tbody>
-                    </table>
-                </div>
+                <table class="result-table w-full border-collapse bg-black text-sm">
+                    <thead>
+                        <tr>
+                            <th class="w-[20%] text-[#ff9f0a] bg-[#1c1c1e] py-2">No.</th>
+                            <th class="w-[40%] text-[#0a84ff] bg-[#1c1c1e] py-2">働き幅</th>
+                            <th class="w-[40%] text-[#30d158] bg-[#1c1c1e] py-2">長さ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultBody"></tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <script>
         let currentTab = 'calc';
+        let activeKey = 'L1';
+        let values = { L1: '0', L2: '0', W: '0', Pitch: '0' };
+        let isFirstInput = true; // 上書きフラグ
+        const sequence = ['L1', 'L2', 'W', 'Pitch'];
+
+        // スワイプ判定用変数
         let touchStartX = 0;
         let touchStartY = 0;
 
-        const inputSequence = ['inputA', 'inputC', 'inputB', 'inputInterval'];
+        function setActiveCell(key) {
+            activeKey = key;
+            isFirstInput = true; // セル選択時に上書きフラグを立てる
+            sequence.forEach(k => {
+                const cell = document.getElementById(`cell-${k}`);
+                if(cell) cell.classList.remove('active');
+            });
+            const activeCell = document.getElementById(`cell-${key}`);
+            if(activeCell) activeCell.classList.add('active');
+        }
+
+        function pressKey(key) {
+            let cur = values[activeKey];
+            
+            if (key === 'AC') {
+                values = { L1: '0', L2: '0', W: '0', Pitch: '0' };
+                isFirstInput = true;
+            } else if (key === 'C') {
+                values[activeKey] = '0';
+                isFirstInput = true;
+            } else if (key === 'enter') {
+                const idx = sequence.indexOf(activeKey);
+                const nextIdx = (idx + 1) % sequence.length;
+                setActiveCell(sequence[nextIdx]);
+                return;
+            } else {
+                // 数字入力処理
+                if (isFirstInput) {
+                    // 初回入力時は既存の値を消して上書き
+                    if (key === '00' || key === '000') {
+                        values[activeKey] = '0';
+                    } else {
+                        values[activeKey] = key;
+                    }
+                    isFirstInput = false;
+                } else {
+                    // 2打目以降は追記
+                    if (cur === '0') {
+                        if (key === '00' || key === '000') {
+                            // 0のまま
+                        } else {
+                            values[activeKey] = key;
+                        }
+                    } else {
+                        values[activeKey] += key;
+                    }
+                }
+            }
+            
+            updateDisplay();
+            calculate();
+            saveState();
+        }
+
+        function updateDisplay() {
+            sequence.forEach(k => {
+                const val = values[k];
+                const num = parseFloat(val);
+                const display = document.getElementById(`val-${k}`);
+                if(display) {
+                    display.innerText = isNaN(num) ? val : num.toLocaleString('en-US', {maximumFractionDigits: 4});
+                }
+            });
+        }
 
         function switchTab(tabName) {
+            if (currentTab === tabName) return;
             currentTab = tabName;
+            
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
             
-            const targetSection = document.getElementById(`view-${tabName}`);
-            const targetButton = document.getElementById(`tab-${tabName}`);
+            const targetView = document.getElementById(`view-${tabName}`);
+            const targetBtn = document.getElementById(`tab-${tabName}`);
             
-            if (targetSection) targetSection.classList.add('active');
-            if (targetButton) targetButton.classList.add('active');
+            if(targetView) targetView.classList.add('active');
+            if(targetBtn) targetBtn.classList.add('active');
             
-            calculate();
+            if (tabName === 'calc') calculate();
             window.scrollTo(0, 0);
         }
 
         function calculate() {
-            const aInput = document.getElementById('inputA').value.replace(/,/g, '');
-            const bInput = document.getElementById('inputB').value.replace(/,/g, '');
-            const cInput = document.getElementById('inputC').value.replace(/,/g, '');
-            const intervalInput = document.getElementById('inputInterval').value.replace(/,/g, '');
-
-            const a = parseFloat(aInput) || 0;
-            const b = parseFloat(bInput) || 0;
-            const c = parseFloat(cInput) || 0;
-            const interval = parseFloat(intervalInput) || 0;
+            const a = parseFloat(values.L1) || 0;
+            const b = parseFloat(values.W) || 0;
+            const c = parseFloat(values.L2) || 0;
+            const interval = parseFloat(values.Pitch) || 0;
 
             if (b <= 0 || interval <= 0) {
-                const emptyFields = ['resNewB', 'resNewC', 'resIntervalCount', 'resStep'];
-                emptyFields.forEach(id => document.getElementById(id).innerText = '-');
-                document.getElementById('resultBody').innerHTML = '';
-                document.getElementById('table-summary').innerText = '';
-                const canvas = document.getElementById('slopeCanvas');
-                if(canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                ['resNewB', 'resNewC', 'resIntervalCount', 'resStep'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) el.innerText = '-';
+                });
+                const tbody = document.getElementById('resultBody');
+                if(tbody) tbody.innerHTML = '';
                 return;
             };
 
@@ -311,32 +378,34 @@
             const newC = a + (slope * newB);
             const step = slope * interval;
 
-            document.getElementById('resNewB').innerText = Math.round(newB).toLocaleString();
-            document.getElementById('resNewC').innerText = Math.round(newC).toLocaleString();
-            document.getElementById('resIntervalCount').innerText = count;
-            document.getElementById('resStep').innerText = Math.round(Math.abs(step)).toLocaleString();
-            document.getElementById('table-summary').innerText = `${count}枚(区間)`;
+            const resNewB = document.getElementById('resNewB');
+            const resNewC = document.getElementById('resNewC');
+            const resIntervalCount = document.getElementById('resIntervalCount');
+            const resStep = document.getElementById('resStep');
+            const tableSummary = document.getElementById('table-summary');
+
+            if(resNewB) resNewB.innerText = Math.round(newB).toLocaleString();
+            if(resNewC) resNewC.innerText = Math.round(newC).toLocaleString();
+            if(resIntervalCount) resIntervalCount.innerText = count;
+            if(resStep) resStep.innerText = Math.round(Math.abs(step)).toLocaleString();
+            if(tableSummary) tableSummary.innerText = `${count}枚`;
 
             const tbody = document.getElementById('resultBody');
-            tbody.innerHTML = '';
-            
-            for (let i = 0; i <= count; i++) {
-                const dist = i * interval;
-                const height = a + (slope * dist);
-                const tr = document.createElement('tr');
-                
-                const noColor = '#ff9f0a';
-                const pitchColor = '#0a84ff';
-                const mainColor = '#30d158';
-                
-                if (i === 0 || i === count) tr.style.backgroundColor = 'rgba(255,255,255,0.03)';
-
-                tr.innerHTML = `
-                    <td style="color: ${noColor} !important; font-weight: bold;">${i}</td>
-                    <td style="color: ${pitchColor} !important;">${dist.toLocaleString()}</td>
-                    <td style="color: ${mainColor} !important; font-weight: 900;">${Math.round(height).toLocaleString()}</td>
-                `;
-                tbody.appendChild(tr);
+            if(tbody) {
+                tbody.innerHTML = '';
+                for (let i = 0; i <= count; i++) {
+                    const dist = i * interval;
+                    const height = a + (slope * dist);
+                    const tr = document.createElement('tr');
+                    if (i === 0 || i === count) tr.className = "bg-[#1c1c1e]";
+                    
+                    tr.innerHTML = `
+                        <td class="text-[#ff9f0a] font-bold border border-[#333] py-2">${i}</td>
+                        <td class="text-[#0a84ff] border border-[#333] py-2">${dist.toLocaleString()}</td>
+                        <td class="text-[#30d158] font-black text-xl border border-[#333] py-2">${Math.round(height).toLocaleString()}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
             }
             drawSlope(a, b, c, newB, newC, count, interval);
         }
@@ -344,113 +413,90 @@
         function drawSlope(a, origB, origC, newB, newC, count, interval) {
             const canvas = document.getElementById('slopeCanvas');
             if(!canvas) return;
+            const container = canvas.parentElement;
+            const dpr = window.devicePixelRatio || 1;
+            const rect = container.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
             const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.scale(dpr, dpr);
+            ctx.clearRect(0, 0, rect.width, rect.height);
             
-            const padding = {l:230, r:220, t:100, b:130};
-            const scaleX = (canvas.width - (padding.l + padding.r)) / newB;
+            const padding = { l: 40, r: 40, t: 25, b: 35 };
+            const drawW = rect.width - (padding.l + padding.r);
+            const drawH = rect.height - (padding.t + padding.b);
+            const scaleX = drawW / (newB || 1);
             const maxHeight = Math.max(a, newC, origC);
-            const scaleY = (canvas.height - (padding.t + padding.b)) / (maxHeight || 1);
-            const tx = (x) => padding.l + x * scaleX;
-            const ty = (y) => canvas.height - padding.b - y * scaleY;
+            const scaleY = drawH / (maxHeight || 1);
 
-            ctx.beginPath(); ctx.strokeStyle = '#1c1c1e'; ctx.lineWidth = 1;
+            const tx = (x) => padding.l + x * scaleX;
+            const ty = (y) => rect.height - padding.b - y * scaleY;
+
+            ctx.beginPath(); ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
             for(let j=0; j<=maxHeight; j+=maxHeight/4) {
                 ctx.moveTo(tx(0), ty(j)); ctx.lineTo(tx(newB), ty(j));
             }
             ctx.stroke();
 
-            ctx.beginPath(); ctx.strokeStyle = '#38383a'; ctx.lineWidth = 4;
-            ctx.moveTo(tx(0), ty(0)); ctx.lineTo(tx(newB), ty(0)); ctx.stroke();
-
             for (let i = 0; i <= count; i++) {
                 const cx = i * interval;
                 const cy = a + ((newC - a) / newB) * cx;
                 ctx.beginPath();
-                ctx.strokeStyle = (i === 0 || i === count) ? '#636366' : '#2c2c2e';
-                ctx.lineWidth = (i === 0 || i === count) ? 3 : 1.5;
+                ctx.strokeStyle = (i === 0 || i === count) ? '#555' : '#222';
                 ctx.moveTo(tx(cx), ty(0)); ctx.lineTo(tx(cx), ty(cy)); ctx.stroke();
             }
 
-            ctx.setLineDash([15, 10]);
-            ctx.strokeStyle = '#ff453a'; ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(tx(origB), ty(0)); ctx.lineTo(tx(origB), ty(origC));
-            ctx.stroke();
+            ctx.setLineDash([4, 2]); ctx.strokeStyle = '#ff453a'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(tx(origB), ty(0)); ctx.lineTo(tx(origB), ty(origC)); ctx.stroke();
             ctx.setLineDash([]);
 
-            ctx.beginPath(); ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 8;
-            ctx.lineJoin = "round"; ctx.lineCap = "round";
+            ctx.beginPath(); ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 3;
             ctx.moveTo(tx(0), ty(a)); ctx.lineTo(tx(newB), ty(newC)); ctx.stroke();
             
-            ctx.font = "bold 38px -apple-system, sans-serif"; 
-            ctx.fillStyle = "#ffffff"; ctx.textAlign = "right";
-            ctx.fillText(`L1: ${Math.round(a).toLocaleString()}`, tx(0)-20, ty(a)+12);
-            ctx.fillStyle = "#0a84ff"; ctx.textAlign = "left";
-            ctx.fillText(`L2: ${Math.round(newC).toLocaleString()}`, tx(newB)+20, ty(newC)+12);
-            ctx.font = "bold 34px -apple-system, sans-serif";
-            ctx.textAlign = "center"; ctx.fillStyle = "#d1d1d6";
-            ctx.fillText(`幅: ${Math.round(newB).toLocaleString()}`, tx(newB / 2), canvas.height - padding.b + 60);
-            ctx.font = "bold 28px -apple-system, sans-serif";
-            ctx.fillStyle = "#ff453a";
-            ctx.fillText(`元W: ${Math.round(origB).toLocaleString()}`, tx(origB), canvas.height - padding.b + 100);
+            ctx.font = "bold 10px sans-serif"; ctx.fillStyle = "#fff"; ctx.textAlign = "right";
+            ctx.fillText(Math.round(a), tx(0)-5, ty(a)+4);
+            ctx.textAlign = "left"; ctx.fillText(Math.round(newC), tx(newB)+5, ty(newC)+4);
         }
 
         function saveState() {
-            const s = { 
-                a:document.getElementById('inputA').value, 
-                b:document.getElementById('inputB').value, 
-                c:document.getElementById('inputC').value, 
-                i:document.getElementById('inputInterval').value 
-            };
-            localStorage.setItem('slope_calc_v_final_styled', JSON.stringify(s));
+            localStorage.setItem('slope_calc_v_keypad', JSON.stringify(values));
+        }
+
+        // スワイプジェスチャーの実装
+        function handleTouchStart(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }
+
+        function handleTouchEnd(e) {
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            
+            const diffX = touchStartX - touchEndX;
+            const diffY = touchStartY - touchEndY;
+
+            if (Math.abs(diffY) < 60 && Math.abs(diffX) > 80) {
+                if (diffX > 0) {
+                    switchTab('table');
+                } else {
+                    switchTab('calc');
+                }
+            }
         }
 
         window.onload = () => {
-            const saved = JSON.parse(localStorage.getItem('slope_calc_v_final_styled'));
-            if(saved){ 
-                document.getElementById('inputA').value = saved.a; 
-                document.getElementById('inputB').value = saved.b; 
-                document.getElementById('inputC').value = saved.c; 
-                document.getElementById('inputInterval').value = saved.i;
+            const saved = JSON.parse(localStorage.getItem('slope_calc_v_keypad'));
+            if(saved) {
+                values = saved;
+                updateDisplay();
                 calculate();
             }
-            window.addEventListener('touchstart', e => { touchStartX = e.touches[0].pageX; touchStartY = e.touches[0].pageY; }, {passive:true});
-            window.addEventListener('touchend', e => {
-                let diffX = touchStartX - e.changedTouches[0].pageX;
-                let diffY = Math.abs(touchStartY - e.changedTouches[0].pageY);
-                if(diffY < 60 && Math.abs(diffX) > 80 && document.activeElement.tagName !== 'INPUT') switchTab(diffX > 0 ? 'table' : 'calc');
-            });
+
+            window.addEventListener('touchstart', handleTouchStart, {passive: true});
+            window.addEventListener('touchend', handleTouchEnd, {passive: true});
+            
+            window.addEventListener('resize', calculate);
         };
-
-        function resetAll() {
-            inputSequence.forEach(id => document.getElementById(id).value='');
-            calculate(); 
-            saveState();
-        }
-
-        document.querySelectorAll('.styled-input').forEach(el => {
-            el.addEventListener('focus', e => { e.target.value = ''; });
-            el.addEventListener('input', e => { calculate(); });
-            el.addEventListener('blur', e => {
-                const raw = e.target.value.replace(/,/g, '');
-                const val = parseFloat(raw);
-                if (!isNaN(val)) e.target.value = val.toLocaleString();
-                else e.target.value = '';
-                saveState();
-                calculate();
-            });
-            el.addEventListener('keydown', e => {
-                if (e.key === 'Enter') {
-                    const currentIndex = inputSequence.indexOf(e.target.id);
-                    if (currentIndex !== -1 && currentIndex < inputSequence.length - 1) {
-                        document.getElementById(inputSequence[currentIndex + 1]).focus();
-                    } else {
-                        el.blur();
-                    }
-                }
-            });
-        });
     </script>
 </body>
 </html>
