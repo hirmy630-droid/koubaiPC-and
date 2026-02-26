@@ -2,7 +2,6 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <!-- ズーム制限を解除 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>勾配 寸法計算</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,11 +13,9 @@
             font-size: 0.9375rem; 
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
             -webkit-tap-highlight-color: transparent;
-            /* パンとズームを両方許可 */
             touch-action: manipulation;
         }
         
-        h1 { font-size: 1.375rem !important; } 
         h2 { font-size: 1.25rem !important; }  
         
         .input-label { font-size: 0.9rem !important; font-weight: 700; }
@@ -50,14 +47,13 @@
             border-radius: 9px;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             color: #d1d1d6; 
-            border: 2px solid transparent; /* 枠線を確保 */
+            border: 2px solid transparent;
         }
 
         .tab-button.active {
             background: linear-gradient(180deg, #636366 0%, #48484a 100%);
             color: white;
             box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
-            /* 選択中の枠をオレンジに設定 */
             border-color: #ff9f0a !important;
             transform: translateY(-1px);
         }
@@ -118,6 +114,7 @@
             display: block;
         }
 
+        /* 入力枠のデザイン調整 */
         .styled-input {
             font-size: 1.35rem !important;
             font-weight: 600;
@@ -125,10 +122,29 @@
             text-align: center;
             width: 100%;
             border-radius: 10px;
-            border-width: 0px;
+            border: 1px solid #545458; /* 通常時: 細めのグレー */
             background-color: #2c2c2e;
             color: #ffffff;
             outline: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 共通フォーカス設定 */
+        .styled-input:focus {
+            border-width: 2px !important;
+            background-color: #3a3a3c;
+            transform: scale(1.01);
+        }
+
+        /* 個別の選択時のボーダー色をラベルに合わせる */
+        #inputA:focus, #inputC:focus {
+            border-color: #30d158 !important; /* L1, L2: 緑 */
+        }
+        #inputB:focus {
+            border-color: #0a84ff !important; /* 幅 W: 青 */
+        }
+        #inputInterval:focus {
+            border-color: #bf5af2 !important; /* 働き幅 ＠: 紫 */
         }
 
         input::-webkit-outer-spin-button,
@@ -146,9 +162,10 @@
 </head>
 <body class="p-3 md:p-6">
     <div id="swipe-container" class="max-w-4xl mx-auto min-h-screen">
-        <header class="mb-4 text-center">
-            <h1 class="font-bold text-white">勾配 寸法計算</h1>
-            <p class="text-standard font-medium text-gray-500 mt-1 tracking-wider uppercase">KYOWA ROOF</p>
+        <!-- ヘッダーレイアウト: タイトル26px左寄せ, KYOWA ROOF右寄せ -->
+        <header class="flex items-baseline justify-between py-4 px-1">
+            <h1 class="text-[26px] font-bold text-white tracking-tight">勾配 寸法計算</h1>
+            <p class="text-[14px] font-medium text-gray-500 uppercase tracking-widest">KYOWA ROOF</p>
         </header>
 
         <div class="tab-container">
