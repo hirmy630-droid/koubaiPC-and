@@ -259,9 +259,9 @@
                 <table class="result-table w-full border-collapse bg-black text-sm">
                     <thead>
                         <tr>
-                            <th class="w-[20%] text-[#ff9f0a] bg-[#1c1c1e] py-2">No.</th>
-                            <th class="w-[40%] text-[#0a84ff] bg-[#1c1c1e] py-2">働き幅</th>
-                            <th class="w-[40%] text-[#30d158] bg-[#1c1c1e] py-2">長さ</th>
+                            <th class="w-[20%] text-[#ff9f0a] bg-[#1c1c1e] py-2" style="border-bottom: 1px solid #d1d1d6;">No.</th>
+                            <th class="w-[40%] text-[#0a84ff] bg-[#1c1c1e] py-2" style="border-bottom: 1px solid #d1d1d6;">働き幅</th>
+                            <th class="w-[40%] text-[#30d158] bg-[#1c1c1e] py-2" style="border-bottom: 1px solid #d1d1d6;">長さ</th>
                         </tr>
                     </thead>
                     <tbody id="resultBody"></tbody>
@@ -421,15 +421,41 @@
                     const dist = i * interval;
                     const height = a + (slope * dist);
                     const tr = document.createElement('tr');
-                    if (i === 0 || i === count) tr.className = "bg-[#1c1c1e]";
+                    
+                    // 0行目の文字色をグレーに変更（0以外の項目）
+                    const distColor = i === 0 ? "text-[#8e8e93]" : "text-[#0a84ff]";
+                    const heightColor = i === 0 ? "text-[#8e8e93]" : "text-[#30d158]";
                     
                     tr.innerHTML = `
                         <td class="text-[#ff9f0a] font-bold border border-[#333] py-2">${i}</td>
-                        <td class="text-[#0a84ff] border border-[#333] py-2">${dist.toLocaleString()}</td>
-                        <td class="text-[#30d158] font-black text-xl border border-[#333] py-2">${Math.round(height).toLocaleString()}</td>
+                        <td class="${distColor} border border-[#333] py-2">${dist.toLocaleString()}</td>
+                        <td class="${heightColor} font-black text-xl border border-[#333] py-2">${Math.round(height).toLocaleString()}</td>
                     `;
                     tbody.appendChild(tr);
                 }
+
+                // 端材の行を最後に追加
+                const scrapW = newB - b;
+                const scrapL = newC - c;
+                
+                const trScrap = document.createElement('tr');
+                trScrap.className = "bg-[#2c2c2e]";
+                trScrap.innerHTML = `
+                    <td class="text-[#d1d1d6] font-bold border border-[#333] py-2 text-[14px]" style="border-top: 1px solid #d1d1d6;">端材</td>
+                    <td class="text-[#0a84ff] border border-[#333] py-2" style="border-top: 1px solid #d1d1d6;">
+                        <div class="flex flex-col items-center justify-center gap-1">
+                            <span class="text-[14px] text-[#d1d1d6] font-normal leading-none">働き 端材</span>
+                            <span class="leading-none mt-0.5">${Math.round(scrapW).toLocaleString()}</span>
+                        </div>
+                    </td>
+                    <td class="text-[#30d158] font-black text-xl border border-[#333] py-2" style="border-top: 1px solid #d1d1d6;">
+                        <div class="flex flex-col items-center justify-center gap-1">
+                            <span class="text-[14px] text-[#d1d1d6] font-normal leading-none">長さ 端材</span>
+                            <span class="leading-none mt-0.5">${Math.round(scrapL).toLocaleString()}</span>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(trScrap);
             }
             drawSlope(a, b, c, newB, newC, count, interval);
         }
