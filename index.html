@@ -271,13 +271,9 @@
     </div>
 
     <!-- 拡大・ピンチ・回転対応ズームモーダル -->
-    <div id="zoomModal" class="hidden fixed inset-0 z-[10000] flex flex-col bg-black/95 backdrop-blur-md transition-opacity">
-        <!-- ヘッダー部分 -->
-        <div class="absolute top-0 left-0 right-0 p-4 md:p-6 flex justify-between items-center z-[10010] bg-gradient-to-b from-black/80 to-transparent">
-            <!-- ヒントテキスト -->
-            <div class="text-white/60 text-[11px] font-bold tracking-widest bg-white/10 px-3 py-1.5 rounded-full pointer-events-none backdrop-blur-sm border border-white/10">
-                ピンチ＆スワイプで操作
-            </div>
+    <div id="zoomModal" class="hidden fixed inset-0 z-[10000] flex flex-col bg-black transition-opacity">
+        <!-- ヘッダー部分 (操作ガイドを削除) -->
+        <div class="absolute top-0 left-0 right-0 p-4 md:p-6 flex justify-end items-center z-[10010]">
             <div class="flex gap-3">
                 <!-- 回転ボタン -->
                 <button type="button" class="text-white bg-white/20 hover:bg-white/30 rounded-full p-2.5 backdrop-blur-md transition-colors" onclick="toggleZoomRotation()">
@@ -291,7 +287,7 @@
         </div>
         <!-- 拡大画像コンテナ (touch-noneでスクロールを防止) -->
         <div id="zoomArea" class="flex-1 w-full h-full flex items-center justify-center overflow-hidden touch-none relative">
-            <img id="zoomImg" class="max-w-full max-h-[80vh] object-contain transition-transform duration-75 ease-out rounded-xl border border-white/10 shadow-2xl" alt="拡大図面" style="transform-origin: center;">
+            <img id="zoomImg" class="max-w-full max-h-full object-contain transition-transform duration-75 ease-out" alt="拡大図面" style="transform-origin: center;">
         </div>
     </div>
 
@@ -558,17 +554,29 @@
 
         function toggleZoomRotation() {
             const zoomImg = document.getElementById('zoomImg');
-            zoomState.rotation = zoomState.rotation === 0 ? 90 : 0;
-            // 回転時にスケールと位置をリセットする
-            zoomState.scale = 1;
+            zoomState.rotation = (zoomState.rotation === 0) ? 90 : 0;
+            
+            // 位置のリセット
             zoomState.x = 0;
             zoomState.y = 0;
             
-            // スムーズなアニメーションを追加
+            // 回転時に画面いっぱいに表示されるようスケールを自動計算
+            if (zoomState.rotation === 90) {
+                const vW = window.innerWidth;
+                const vH = window.innerHeight;
+                // imgタグの表示領域を取得
+                const rect = zoomImg.getBoundingClientRect();
+                // 90度回転時は、元の幅が高さになり、元の高さが幅になる
+                // 安全のため画面の95%程度に収まるスケールを算出
+                const scaleW = (vW * 0.95) / rect.height;
+                const scaleH = (vH * 0.95) / rect.width;
+                zoomState.scale = Math.min(scaleW, scaleH);
+            } else {
+                zoomState.scale = 1;
+            }
+            
             zoomImg.style.transition = 'transform 0.3s ease-in-out';
             updateZoomTransform();
-            
-            // アニメーションが終わったらtransitionを外す（ピンチ時の遅延を防ぐため）
             setTimeout(() => { zoomImg.style.transition = 'none'; }, 300);
         }
 
@@ -609,8 +617,8 @@
                         e.touches[0].clientY - e.touches[1].clientY
                     );
                     const scale = pinchState.initialScale * (dist / pinchState.initialDist);
-                    // 0.5倍から5倍の間に制限
-                    zoomState.scale = Math.max(0.5, Math.min(scale, 5));
+                    // 0.3倍から10倍の間に制限
+                    zoomState.scale = Math.max(0.3, Math.min(scale, 10));
                     updateZoomTransform();
                 }
             }, { passive: false });
@@ -662,6 +670,7 @@
 
             window.addEventListener('touchstart', handleTouchStart, {passive: true});
             window.addEventListener('touchend', handleTouchEnd, {passive: true});
+            
             window.addEventListener('resize', calculate);
         };
     </script>
