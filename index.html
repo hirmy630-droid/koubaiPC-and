@@ -99,30 +99,6 @@
             font-weight: 700;
         }
 
-        /* タブ */
-        .tab-container {
-            background: #161618;
-            padding: 2px;
-            border-radius: 10px;
-            display: flex;
-            margin-bottom: 10px;
-            border: 1px solid #38383a;
-        }
-        .tab-button {
-            flex: 1;
-            padding: 6px 0;
-            text-align: center;
-            font-weight: 600;
-            border-radius: 7px;
-            color: #d1d1d6;
-            font-size: 0.85rem;
-        }
-        .tab-button.active {
-            background: #48484a;
-            color: white;
-            border: 1px solid #ff9f0a;
-        }
-
         .result-label {
             font-size: 13px !important;
             font-weight: 700;
@@ -142,8 +118,6 @@
         }
         canvas { width: 100%; height: 100%; display: block; }
 
-        .view-section { display: none; }
-        .view-section.active { display: block; }
         
         .result-table th {
             border: 0.5px solid #333; 
@@ -158,22 +132,119 @@
             padding: 12px 2px !important;
             font-size: 1.1rem;
         }
+
+        .ipad-split-layout {
+            display: block;
+        }
+        .calc-column, .table-column {
+            min-width: 0;
+        }
+        .table-column {
+            margin-top: 12px;
+        }
+        @media (min-width: 1024px) and (orientation: landscape) {
+            #app-container {
+                max-width: 1366px;
+            }
+            .ipad-split-layout {
+                display: grid;
+                grid-template-columns: minmax(0, 1.1fr) minmax(420px, 0.9fr);
+                gap: 14px;
+                align-items: start;
+            }
+            .table-column {
+                margin-top: 0;
+                position: sticky;
+                top: 12px;
+            }
+            .table-card {
+                max-height: calc(100vh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+                overflow: auto;
+            }
+            .table-column .result-table td {
+                font-size: 1.22rem;
+                padding: 13px 3px !important;
+            }
+            .table-column .result-table th {
+                font-size: 16px;
+                padding: 11px 3px !important;
+            }
+            .table-column #table-summary {
+                font-size: 1.35rem;
+            }
+            .table-column h2 {
+                font-size: 1.05rem;
+            }
+        }
     </style>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="勾配 寸法計算">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-startup-image" href="splash-1170x2532.png">
+<meta name="format-detection" content="telephone=no">
+<style>
+#shareBtn{
+  width:100%;
+  border:none;
+  border-radius:10px;
+  background:#0a84ff;
+  color:#fff;
+  padding:8px 14px;
+  font-size:15px;
+  font-weight:800;
+  line-height:1;
+  min-height:34px;
+  box-shadow:0 6px 14px rgba(10,132,255,.20);
+}
+#shareBtn:active{transform:scale(.99); background:#0974dd;}
+#installBtn{
+  position:fixed;
+  right:16px;
+  bottom:calc(16px + env(safe-area-inset-bottom));
+  z-index:9999;
+  border:none;
+  border-radius:14px;
+  background:#2563eb;
+  color:#fff;
+  padding:12px 16px;
+  font-size:14px;
+  font-weight:700;
+  box-shadow:0 10px 24px rgba(0,0,0,.35);
+  display:none;
+}
+#installBtn:active{transform:scale(.98)}
+body{
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+</style>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+}
+</script>
+
 </head>
 <body class="p-3 relative">
-    <div id="app-container" class="max-w-md mx-auto min-h-screen pb-4">
-        <header class="flex items-baseline justify-between py-1 px-1 mb-1">
+    <div id="app-container" class="mx-auto min-h-screen pb-4">
+        <header class="flex items-baseline justify-between py-1 px-1 mb-1 gap-2">
             <h1 class="text-[20px] font-bold text-white tracking-tight">勾配 寸法計算</h1>
-            <p class="text-[12px] font-medium text-gray-500 uppercase tracking-widest">KYOWA ROOF</p>
+            <div class="header-right">
+                <button id="shareBtn" type="button" onclick="shareAllData()">共有</button>
+                <p class="header-brand">KYOWA ROOF</p>
+            </div>
         </header>
 
-        <div class="tab-container">
-            <button id="tab-calc" class="tab-button active" onclick="switchTab('calc')">計算</button>
-            <button id="tab-table" class="tab-button" onclick="switchTab('table')">寸法表</button>
-        </div>
+        <div class="ipad-split-layout">
+            <div class="calc-column">
 
-        <!-- 計算画面 -->
-        <div id="view-calc" class="view-section active">
             <div class="unified-input-unit mb-3">
                 <div class="input-grid">
                     <div id="cell-L1" class="input-cell active" onclick="setActiveCell('L1')">
@@ -237,6 +308,7 @@
                         <span id="resStep" class="result-value text-white">-</span>
                     </div>
                 </div>
+
                 
                 <div class="canvas-container border border-[#333] rounded-lg cursor-pointer" onclick="openZoomModal()">
                     <!-- 拡大バッジ (非表示) -->
@@ -247,11 +319,9 @@
                     <canvas id="slopeCanvas"></canvas>
                 </div>
             </div>
-        </div>
-
-        <!-- 寸法表画面 -->
-        <div id="view-table" class="view-section">
-            <div class="bg-[#1c1c1e] rounded-[14px] p-3 border border-[#333]">
+            </div>
+            <div class="table-column">
+                <div class="bg-[#1c1c1e] rounded-[14px] p-3 border border-[#333] table-card">
                 <div class="flex justify-between items-center mb-2">
                     <h2 class="font-bold text-gray-200">寸法詳細</h2>
                     <span id="table-summary" class="text-lg text-[#ff9f0a] font-bold"></span>
@@ -267,7 +337,9 @@
                     <tbody id="resultBody"></tbody>
                 </table>
             </div>
+            </div>
         </div>
+
     </div>
 
     <!-- 拡大・ピンチ・回転対応ズームモーダル -->
@@ -292,13 +364,10 @@
     </div>
 
     <script>
-        let currentTab = 'calc';
         let activeKey = 'L1';
         let values = { L1: '0', L2: '0', W: '0', Pitch: '0' };
         let isFirstInput = true;
         const sequence = ['L1', 'L2', 'W', 'Pitch'];
-        let touchStartX = 0;
-        let touchStartY = 0;
 
         // ---------- 入力・計算系 ----------
         function setActiveCell(key) {
@@ -352,18 +421,6 @@
             });
         }
 
-        function switchTab(tabName) {
-            if (currentTab === tabName) return;
-            currentTab = tabName;
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
-            const targetView = document.getElementById(`view-${tabName}`);
-            const targetBtn = document.getElementById(`tab-${tabName}`);
-            if(targetView) targetView.classList.add('active');
-            if(targetBtn) targetBtn.classList.add('active');
-            if (tabName === 'calc') calculate();
-            window.scrollTo(0, 0);
-        }
 
         function calculate() {
             const a = parseFloat(values.L1) || 0;
@@ -526,6 +583,72 @@
             localStorage.setItem('slope_calc_v_keypad', JSON.stringify(values));
         }
 
+        function formatNumberText(value) {
+            const num = parseFloat(value);
+            return Number.isFinite(num) ? num.toLocaleString('en-US', { maximumFractionDigits: 4 }) : '0';
+        }
+
+        function getResultText(id) {
+            const el = document.getElementById(id);
+            return el ? el.innerText.trim() : '-';
+        }
+
+        function buildShareText() {
+            const lines = [];
+            lines.push('勾配 寸法計算');
+            lines.push('');
+            lines.push('【入力値】');
+            lines.push(`基準側 L1: ${formatNumberText(values.L1)}`);
+            lines.push(`延長側 L2: ${formatNumberText(values.L2)}`);
+            lines.push(`全体の幅 W: ${formatNumberText(values.W)}`);
+            lines.push(`働き幅 @: ${formatNumberText(values.Pitch)}`);
+            lines.push('');
+            lines.push('【計算結果】');
+            lines.push(`延長後の幅: ${getResultText('resNewB')}`);
+            lines.push(`延長後のL2: ${getResultText('resNewC')}`);
+            lines.push(`総枚数: ${getResultText('resIntervalCount')}`);
+            lines.push(`増分: ${getResultText('resStep')}`);
+            lines.push('');
+            lines.push('【寸法表】');
+
+            const rows = Array.from(document.querySelectorAll('#resultBody tr'));
+            if (rows.length === 0) {
+                lines.push('データなし');
+            } else {
+                rows.forEach((row) => {
+                    const cells = Array.from(row.querySelectorAll('td')).map(td => td.innerText.replace(/\n+/g, ' / ').replace(/\s+/g, ' ').trim());
+                    if (cells.length >= 3) {
+                        lines.push(`${cells[0]} | 働き幅: ${cells[1]} | 長さ: ${cells[2]}`);
+                    }
+                });
+            }
+
+            return lines.join('\n');
+        }
+
+        async function shareAllData() {
+            const shareText = buildShareText();
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: '勾配 寸法計算',
+                        text: shareText
+                    });
+                    return;
+                } catch (error) {
+                    if (error && error.name === 'AbortError') return;
+                }
+            }
+
+            try {
+                await navigator.clipboard.writeText(shareText);
+                alert('共有に対応していないため、全文をコピーしました。貼り付けて送ってください。');
+            } catch (error) {
+                alert(shareText);
+            }
+        }
+
         // ---------- ズーム・回転・ピンチ機能 ----------
         let zoomState = { scale: 1, x: 0, y: 0, rotation: 0 };
         let pinchState = { isDragging: false, startX: 0, startY: 0, initialDist: 0, initialScale: 1 };
@@ -637,29 +760,6 @@
                 }
             });
         });
-
-        // スワイプジェスチャーの実装（タブ切り替え）
-        function handleTouchStart(e) {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-        }
-
-        function handleTouchEnd(e) {
-            // モーダルが開いている時はタブ切り替えを無効化
-            if (!document.getElementById('zoomModal').classList.contains('hidden')) return;
-
-            const touchEndX = e.changedTouches[0].clientX;
-            const touchEndY = e.changedTouches[0].clientY;
-            
-            const diffX = touchStartX - touchEndX;
-            const diffY = touchStartY - touchEndY;
-
-            if (Math.abs(diffY) < 60 && Math.abs(diffX) > 80) {
-                if (diffX > 0) switchTab('table');
-                else switchTab('calc');
-            }
-        }
-
         window.onload = () => {
             const saved = JSON.parse(localStorage.getItem('slope_calc_v_keypad'));
             if(saved) {
@@ -668,11 +768,36 @@
                 calculate();
             }
 
-            window.addEventListener('touchstart', handleTouchStart, {passive: true});
-            window.addEventListener('touchend', handleTouchEnd, {passive: true});
-            
             window.addEventListener('resize', calculate);
         };
     </script>
+
+<button id="installBtn" aria-label="このアプリをインストール">アプリをインストール</button>
+<script>
+(function() {
+  let deferredPrompt = null;
+  const btn = document.getElementById('installBtn');
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!isStandalone) btn.style.display = 'block';
+  });
+
+  btn.addEventListener('click', async function() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    try { await deferredPrompt.userChoice; } catch (e) {}
+    deferredPrompt = null;
+    btn.style.display = 'none';
+  });
+
+  window.addEventListener('appinstalled', function() {
+    btn.style.display = 'none';
+  });
+})();
+</script>
+
 </body>
 </html>
